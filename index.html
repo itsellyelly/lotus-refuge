@@ -17,9 +17,7 @@
     <div class="landing-card panel">
       <h1>Lotus Refuge <span class="zh">莲心</span></h1>
       <p>A pixel-art refuge for your friend group. When work gets tough, meet at the temple, chapel, prayer hall, mandir or wishing tree. Or head to the Gossip Bar and vent about the boss.</p>
-      <p id="inviteNote" class="invite-note" hidden>You've been invited to a circle. Sign in to join it.</p>
       <div class="landing-actions">
-        <button id="googleBtn" class="btn primary" type="button">Sign in with Google</button>
         <button id="demoBtn" class="btn" type="button" hidden>Try the demo</button>
       </div>
       <p id="landingMsg" class="muted small"></p>
@@ -35,7 +33,6 @@
       <span class="spacer"></span>
       <button class="chip" id="meChip" type="button" aria-label="Change how friends see you"><span class="dot" id="meDot"></span><span id="meName">You</span></button>
       <button class="btn small" id="soundBtn" type="button" aria-pressed="true">Sound on</button>
-      <button class="btn small" id="signOutBtn" type="button">Sign out</button>
     </header>
 
     <main class="app">
@@ -103,7 +100,7 @@
   <div class="overlay" id="inviteSheet" hidden>
     <div class="sheet panel" role="dialog" aria-modal="true" aria-labelledby="inviteH">
       <h3 id="inviteH">Invite friends to <span id="inviteCircle"></span></h3>
-      <p class="sub">Anyone with this link can join after signing in with Google. Send it only to your circle.</p>
+      <p class="sub">Anyone with this link can join by typing a name. No account needed. Send it only to your circle.</p>
       <div class="copyrow"><input class="field" id="inviteLink" readonly><button class="btn primary" type="button" id="copyInvite">Copy</button></div>
       <p class="muted small">Invite code: <code id="inviteCode"></code></p>
       <div class="sheet-actions">

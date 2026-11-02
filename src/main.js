@@ -28,7 +28,7 @@ function errText(e) {
 
 /* ================================================================ state */
 const S = {
-  uid: null, googleName: '',
+  uid: null, defaultName: '',
   circles: [], circle: null, api: null,
   members: new Map(), messages: [], offerings: [], reactions: [], scores: [], peers: [],
   realm: 'gate', me: { x: 500, y: 620, tx: 500, ty: 620, moving: 0, back: false },
@@ -397,9 +397,10 @@ let obMode = 'create', obRobe = Math.floor(Math.random() * ROBES.length);
 function openOnboard(mode, code = '') {
   if (!data.configured) { toast('Creating and joining circles needs Supabase. This is the demo.'); return; }
   obMode = mode; $('obErr').hidden = true;
-  $('obNick').value = $('obNick').value || S.googleName || '';
+  $('obNick').value = $('obNick').value || S.defaultName || '';
   $('joinCode').value = code; swatchGroup($('obSwatches'), () => obRobe, (i) => (obRobe = i)); fillHomes($('obHome'), '');
-  $('obCancel').hidden = !S.circles.length; syncOb(); openSheet('onboardSheet');
+  $('obCancel').hidden = !S.circles.length; syncOb();
+  if (mode === 'join' && code) $('obNick').focus(); openSheet('onboardSheet');
 }
 function syncOb() {
   document.querySelectorAll('.seg-btn').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.mode === obMode)));
@@ -494,43 +495,43 @@ async function loadCircles(preferId) {
 async function afterSignIn(session) {
   S.uid = session.user.id;
   const md = session.user.user_metadata || {};
-  S.googleName = String(md.full_name || md.name || '').split(' ')[0].slice(0, 24);
+  S.defaultName = String(md.full_name || md.name || '').split(' ')[0].slice(0, 24);
   $('landing').hidden = true; $('world').hidden = false; resize();
   const code = new URLSearchParams(location.search).get('join');
   if (code) {
     history.replaceState(null, '', location.pathname);
-    try {
-      const c = await data.joinCircle({ code, nickname: S.googleName || 'Friend', robe: Math.floor(Math.random() * ROBES.length) });
-      toast('Welcome to ' + c.name + '. Tap your name to change how you appear.');
-      await loadCircles(c.id); return;
-    } catch (e) { toast(errText(e)); }
+    S.circles = await data.myCircles(S.uid);
+    renderCircleSelect();
+    openOnboard('join', code);
+    return;
   }
   await loadCircles();
 }
 
 function showLanding() {
   $('world').hidden = true; $('landing').hidden = false;
-  $('inviteNote').hidden = !new URLSearchParams(location.search).get('join');
   if (!data.configured) {
-    $('googleBtn').hidden = true; $('demoBtn').hidden = false;
+    $('demoBtn').hidden = false;
     $('landingMsg').textContent = 'Supabase isn’t configured yet (VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY), so this runs as a single-player demo.';
   }
 }
-$('googleBtn').onclick = async () => { try { await data.signInWithGoogle(); } catch (e) { $('landingMsg').textContent = errText(e); } };
 $('demoBtn').onclick = () => {
   S.uid = 'demo-user'; $('landing').hidden = true; $('world').hidden = false; resize();
   S.circles = [{ id: 'demo', name: 'Demo circle', invite_code: 'demo', role: 'owner', me: { nickname: 'You', robe: 1, role: 'owner', home_realm: null } }];
   enterCircle(S.circles[0]);
 };
-$('signOutBtn').onclick = async () => { S.api?.close(); S.api = null; await data.signOut(); location.reload(); };
 
 /* ================================================================ boot */
 syncSound();
 requestAnimationFrame(frame);
 (async () => {
   if (!data.configured) { showLanding(); return; }
-  const session = await data.getSession();
-  if (session) await afterSignIn(session); else showLanding();
-  data.onAuth((s) => { if (s && !S.uid) afterSignIn(s); if (!s && S.uid) location.reload(); });
-})().catch((e) => { showLanding(); $('landingMsg').textContent = errText(e); });
+  const session = (await data.getSession()) || (await data.signInAnon());
+  await afterSignIn(session);
+})().catch((e) => {
+  showLanding();
+  $('landingMsg').textContent = /anonymous/i.test(e?.message || '')
+    ? 'The app owner needs to turn on anonymous sign-ins in Supabase (Authentication → Sign In / Providers).'
+    : errText(e);
+});
 

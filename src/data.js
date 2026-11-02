@@ -17,10 +17,11 @@ export function onAuth(fn) {
   const { data } = supabase.auth.onAuthStateChange((_e, session) => fn(session));
   return () => data.subscription.unsubscribe();
 }
-export async function signInWithGoogle() {
-  const redirectTo = window.location.origin + window.location.pathname + window.location.search;
-  const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
+// No sign-in screen: each browser gets an invisible guest identity (Supabase anonymous auth).
+export async function signInAnon() {
+  const { data, error } = await supabase.auth.signInAnonymously();
   if (error) throw error;
+  return data.session;
 }
 export async function signOut() { if (supabase) await supabase.auth.signOut(); }
 
