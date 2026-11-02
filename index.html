@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Lotus Refuge</title>
+  <meta name="description" content="A pixel-art refuge for your friend group: temples, a chapel, a prayer hall, a mandir, a wishing tree, and a gossip bar for venting about the boss.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230f2c2c'/%3E%3Cpath d='M8 3 10 8 8 12 6 8Z' fill='%23e56b8f'/%3E%3Cpath d='M3 8 8 12 5 12Z M13 8 8 12 11 12Z' fill='%23f7b2c6'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri&family=DotGothic16&family=Ma+Shan+Zheng&family=Pixelify+Sans:wght@400;600;700&family=Tiro+Devanagari+Hindi&display=swap">
+</head>
+<body>
+  <!-- Signed-out landing -->
+  <section id="landing" class="landing" hidden>
+    <div class="landing-art"><img src="/scenes/temple-gate.webp" alt="Pixel-art temple gate with friends gathering in the courtyard"></div>
+    <div class="landing-card panel">
+      <h1>Lotus Refuge <span class="zh">莲心</span></h1>
+      <p>A pixel-art refuge for your friend group. When work gets tough, meet at the temple, chapel, prayer hall, mandir or wishing tree. Or head to the Gossip Bar and vent about the boss.</p>
+      <p id="inviteNote" class="invite-note" hidden>You've been invited to a circle. Sign in to join it.</p>
+      <div class="landing-actions">
+        <button id="googleBtn" class="btn primary" type="button">Sign in with Google</button>
+        <button id="demoBtn" class="btn" type="button" hidden>Try the demo</button>
+      </div>
+      <p id="landingMsg" class="muted small"></p>
+    </div>
+  </section>
+
+  <!-- The world -->
+  <div id="world" hidden>
+    <header class="top">
+      <div class="brand"><span class="logo">Lotus Refuge</span><span class="zh">莲心</span></div>
+      <label class="circle-pick"><span class="sr">Circle</span><select id="circleSelect"></select></label>
+      <button class="btn small" id="inviteBtn" type="button">Invite friends</button>
+      <span class="spacer"></span>
+      <button class="chip" id="meChip" type="button" aria-label="Change how friends see you"><span class="dot" id="meDot"></span><span id="meName">You</span></button>
+      <button class="btn small" id="soundBtn" type="button" aria-pressed="true">Sound on</button>
+      <button class="btn small" id="signOutBtn" type="button">Sign out</button>
+    </header>
+
+    <main class="app">
+      <section class="stage-col">
+        <nav class="gates" id="gates" aria-label="Realms"></nav>
+        <div class="stage" id="stage">
+          <canvas id="scene" aria-label="Realm scene. Tap the ground to walk."></canvas>
+          <span class="hint" id="hint">Tap the ground to walk</span>
+        </div>
+        <div class="realm-bar">
+          <div class="realm-text"><h2 id="realmTitle"></h2><p id="realmBlurb"></p></div>
+          <div class="actions" id="actions"></div>
+        </div>
+      </section>
+
+      <aside class="side panel">
+        <div class="tabs" role="tablist">
+          <button class="tab" role="tab" data-tab="chat" type="button">Chat</button>
+          <button class="tab" role="tab" data-tab="vents" type="button">Vent board</button>
+          <button class="tab" role="tab" data-tab="who" type="button">Who's where</button>
+        </div>
+        <div class="status" id="status" hidden></div>
+        <div class="feed" id="chatPanel"></div>
+        <div class="feed" id="ventPanel" hidden></div>
+        <div class="feed" id="whoPanel" hidden></div>
+        <form class="composer" id="composer">
+          <textarea id="chatInput" maxlength="500" rows="1" placeholder="Check in with the circle…" aria-label="Message"></textarea>
+          <button class="btn primary" type="submit" id="sendBtn">Send</button>
+        </form>
+      </aside>
+    </main>
+  </div>
+
+  <!-- Sheets -->
+  <div class="overlay" id="onboardSheet" hidden>
+    <div class="sheet panel" role="dialog" aria-modal="true" aria-labelledby="onboardH">
+      <h3 id="onboardH">Start your circle</h3>
+      <div class="seg" role="tablist">
+        <button type="button" class="seg-btn" data-mode="create" aria-selected="true">Create a circle</button>
+        <button type="button" class="seg-btn" data-mode="join" aria-selected="false">Join with a code</button>
+      </div>
+      <div id="createFields">
+        <label class="fl" for="circleName">Circle name</label>
+        <input class="field" id="circleName" maxlength="40" placeholder="The Overtime Survivors">
+      </div>
+      <div id="joinFields" hidden>
+        <label class="fl" for="joinCode">Invite code</label>
+        <input class="field" id="joinCode" maxlength="64" placeholder="Paste the code or the whole invite link">
+      </div>
+      <label class="fl" for="obNick">Your name in this circle</label>
+      <input class="field" id="obNick" maxlength="24">
+      <label class="fl" id="obRobeLbl">Outfit colour</label>
+      <div class="swatches" id="obSwatches" role="radiogroup" aria-labelledby="obRobeLbl"></div>
+      <label class="fl" for="obHome">Your home space (optional)</label>
+      <select class="field" id="obHome"></select>
+      <p class="muted small">This is where you appear when you arrive. Everyone can visit every space.</p>
+      <p class="err" id="obErr" hidden></p>
+      <div class="sheet-actions">
+        <button class="btn" type="button" id="obCancel" data-close>Cancel</button>
+        <button class="btn primary" type="button" id="obGo">Create circle</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="inviteSheet" hidden>
+    <div class="sheet panel" role="dialog" aria-modal="true" aria-labelledby="inviteH">
+      <h3 id="inviteH">Invite friends to <span id="inviteCircle"></span></h3>
+      <p class="sub">Anyone with this link can join after signing in with Google. Send it only to your circle.</p>
+      <div class="copyrow"><input class="field" id="inviteLink" readonly><button class="btn primary" type="button" id="copyInvite">Copy</button></div>
+      <p class="muted small">Invite code: <code id="inviteCode"></code></p>
+      <div class="sheet-actions">
+        <button class="btn" type="button" id="rotateInvite" hidden>Make a new link (old one stops working)</button>
+        <button class="btn" type="button" id="newCircleBtn">Create or join another circle</button>
+        <button class="btn primary" type="button" data-close>Done</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="offerSheet" hidden>
+    <div class="sheet panel" role="dialog" aria-modal="true" aria-labelledby="offerH">
+      <div id="offerForm">
+        <h3 id="offerH"></h3>
+        <p class="sub" id="offerSub"></p>
+        <div class="items" id="itemPick" role="radiogroup" aria-labelledby="offerH"></div>
+        <label class="fl" for="wish">Your intention (optional)</label>
+        <textarea class="field" id="wish" maxlength="160"></textarea>
+        <label class="check"><input type="checkbox" id="wishShare" checked> Let my circle read it</label>
+        <div class="sheet-actions">
+          <button class="btn" type="button" data-close>Cancel</button>
+          <button class="btn primary" type="button" id="offerGo"></button>
+        </div>
+      </div>
+      <div id="offerDone" hidden>
+        <h3 id="doneH"></h3>
+        <p class="sub" id="doneSub"></p>
+        <p class="blessing" id="blessing"></p>
+        <p class="blessing-en" id="blessingEn"></p>
+        <div class="sheet-actions"><button class="btn primary" type="button" data-close>Return</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="checkSheet" hidden>
+    <div class="sheet panel" role="dialog" aria-modal="true" aria-labelledby="checkH">
+      <h3 id="checkH">Check in at <span id="checkRealm"></span></h3>
+      <p class="sub">Your circle sees where you are and how you're doing.</p>
+      <label class="fl" id="moodLbl">How are you?</label>
+      <div class="moods" id="moods" role="radiogroup" aria-labelledby="moodLbl"></div>
+      <label class="fl" for="checkNote">A few words (optional)</label>
+      <textarea class="field" id="checkNote" maxlength="140" placeholder="Long day of reviews. Here to breathe."></textarea>
+      <div class="sheet-actions">
+        <button class="btn" type="button" data-close>Cancel</button>
+        <button class="btn primary" type="button" id="checkGo">Check in</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="meSheet" hidden>
+    <div class="sheet panel" role="dialog" aria-modal="true" aria-labelledby="meH">
+      <h3 id="meH">How your circle sees you</h3>
+      <label class="fl" for="nickInput">Name</label>
+      <input class="field" id="nickInput" maxlength="24">
+      <label class="fl" id="robeLbl">Outfit colour</label>
+      <div class="swatches" id="swatches" role="radiogroup" aria-labelledby="robeLbl"></div>
+      <label class="fl" for="homeInput">Home space</label>
+      <select class="field" id="homeInput"></select>
+      <div class="sheet-actions">
+        <button class="btn danger" type="button" id="leaveBtn">Leave this circle</button>
+        <button class="btn" type="button" data-close>Cancel</button>
+        <button class="btn primary" type="button" id="meSave">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="gameSheet" hidden>
+    <div class="sheet panel wide" role="dialog" aria-modal="true" aria-labelledby="gameH">
+      <h3 id="gameH">Whack-a-Boss</h3>
+      <p class="sub">30 seconds. Bonk the bosses (gold ones are worth more). Leave your coworker friends alone.</p>
+      <div class="game-grid">
+        <div>
+          <canvas id="gameCanvas" class="game-canvas" aria-label="Whack-a-Boss game"></canvas>
+          <div class="game-controls">
+            <button class="btn primary" type="button" id="gameStart">Start</button>
+            <label class="boss-name"><span>Boss nickname</span><input class="field" id="bossName" maxlength="14" placeholder="e.g. Mr. Sync"></label>
+          </div>
+          <p class="muted small">The boss nickname stays on this device. It is never sent to the circle.</p>
+        </div>
+        <div class="board">
+          <h4>Circle leaderboard</h4>
+          <ol id="leaderboard"></ol>
+        </div>
+      </div>
+      <div class="sheet-actions"><button class="btn" type="button" data-close>Close</button></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
